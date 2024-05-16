@@ -13,6 +13,8 @@ import (
 	"github.com/drizzleent/ton-bot/internal/events/telegram"
 	"github.com/drizzleent/ton-bot/internal/service"
 	"github.com/drizzleent/ton-bot/internal/service/check"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type serviceProvider struct {
@@ -25,7 +27,8 @@ type serviceProvider struct {
 
 	service service.Service
 
-	tgClient *tgClient.Client
+	tgClient       *tgClient.Client
+	grpcClientConn *grpc.ClientConn
 }
 
 func newServiceProvider() *serviceProvider {
@@ -42,6 +45,17 @@ func (s *serviceProvider) BotConfig() config.BotConfig {
 	}
 
 	return s.tgConfig
+}
+
+func (s *serviceProvider) GRPCClientConn(_ context.Context) *grpc.ClientConn {
+	if nil == s.grpcClientConn {
+		conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			log.Fatalf("failed to connect grpc server %s", err.Error())
+		}
+		s.grpcClientConn = conn
+	}
+	return s.grpcClientConn
 }
 
 func (s *serviceProvider) TgClient(_ context.Context) *tgClient.Client {
@@ -77,7 +91,7 @@ func (s *serviceProvider) Consumer(ctx context.Context) consumer.Consumer {
 
 func (s *serviceProvider) Service(ctx context.Context) service.Service {
 	if nil == s.service {
-		s.service = check.NewCheckService()
+		s.service = check.NewCheckService(s.GRPCClientConn(ctx))
 	}
 
 	return s.service

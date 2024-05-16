@@ -1,13 +1,15 @@
 package check
 
-import "net/http"
+import (
+	"google.golang.org/grpc"
+)
 
 type CheckService struct {
-	cl *http.Client
+	conn *grpc.ClientConn
 }
 
-func NewCheckService() *CheckService {
+func NewCheckService(conn *grpc.ClientConn) *CheckService {
 	return &CheckService{
-		cl: &http.Client{},
+		conn: conn,
 	}
 }
