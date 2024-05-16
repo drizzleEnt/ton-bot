@@ -5,9 +5,11 @@ import (
 
 	"github.com/drizzleent/ton-bot/internal/clients/telegram"
 	"github.com/drizzleent/ton-bot/internal/events"
+	"github.com/drizzleent/ton-bot/internal/service"
 )
 
 type processor struct {
+	srv    service.Service
 	tg     *telegram.Client
 	offset int
 }
@@ -17,9 +19,10 @@ type Meta struct {
 	Username string
 }
 
-func New(cl *telegram.Client) *processor {
+func New(cl *telegram.Client, srv service.Service) *processor {
 	return &processor{
-		tg: cl,
+		srv: srv,
+		tg:  cl,
 	}
 }
 

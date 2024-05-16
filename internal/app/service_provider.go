@@ -11,6 +11,8 @@ import (
 	eventconsumer "github.com/drizzleent/ton-bot/internal/consumer/event-consumer"
 	"github.com/drizzleent/ton-bot/internal/events"
 	"github.com/drizzleent/ton-bot/internal/events/telegram"
+	"github.com/drizzleent/ton-bot/internal/service"
+	"github.com/drizzleent/ton-bot/internal/service/check"
 )
 
 type serviceProvider struct {
@@ -20,6 +22,8 @@ type serviceProvider struct {
 
 	fetcher   events.Fetcher
 	processor events.Processor
+
+	service service.Service
 
 	tgClient *tgClient.Client
 }
@@ -49,7 +53,7 @@ func (s *serviceProvider) TgClient(_ context.Context) *tgClient.Client {
 
 func (s *serviceProvider) Fetcher(ctx context.Context) events.Fetcher {
 	if nil == s.fetcher {
-		s.fetcher = telegram.New(s.TgClient(ctx))
+		s.fetcher = telegram.New(s.TgClient(ctx), s.Service(ctx))
 	}
 
 	return s.fetcher
@@ -57,7 +61,7 @@ func (s *serviceProvider) Fetcher(ctx context.Context) events.Fetcher {
 
 func (s *serviceProvider) Processor(ctx context.Context) events.Processor {
 	if nil == s.processor {
-		s.processor = telegram.New(s.TgClient(ctx))
+		s.processor = telegram.New(s.TgClient(ctx), s.Service(ctx))
 	}
 
 	return s.processor
@@ -69,4 +73,12 @@ func (s *serviceProvider) Consumer(ctx context.Context) consumer.Consumer {
 	}
 
 	return s.consumer
+}
+
+func (s *serviceProvider) Service(ctx context.Context) service.Service {
+	if nil == s.service {
+		s.service = check.NewCheckService()
+	}
+
+	return s.service
 }
